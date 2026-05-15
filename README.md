@@ -25,3 +25,13 @@ This application allows users to input English text and get grammar and spelling
 
 ## 📂 Project Structure
 
+---
+
+## 🛠️ Tech Stack
+
+- **Python**
+- **Flask**
+- **LanguageTool**
+- **HTML, CSS**
+
+---
