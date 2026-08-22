@@ -1,0 +1,41 @@
+name: InkGuard — Documentation Review
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, labeled]
+    paths:
+      - "**.md"
+      - "**.mdx"
+      - "**.txt"
+      - "**.rst"
+      - "**.adoc"
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  inkguard:
+    name: InkGuard Review
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install flask
+
+      - name: Run InkGuard Bot
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IG_SCORE_THRESHOLD: "80"        # minimum passing score
+          IG_FAIL_ON_ERROR: "false"       # set "true" to block merges
+          IG_REQUIRE_LABEL: "true"        # only run when PR has a trigger label
+          IG_LABELS: "docs,documentation,content,inkguard,doc-review"
+        run: python bot/inkguard_bot.py

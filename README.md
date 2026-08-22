@@ -1,15 +1,60 @@
-# GrammarLens
+# InkGuard 🖊️
 
-**Documentation-grade grammar checking for teams, repos, and CI pipelines.**
+**The documentation grammar bot for GitHub.** InkGuard automatically reviews grammar in every pull request, posts a detailed comment, and either approves or requests changes — just like a human technical writer would.
 
-GrammarLens is a self-hosted grammar analysis tool built to be used as a drop-in linter for documentation. It ships as a Python/Flask web app with a clean REST API that any pipeline, bot, or editor integration can call.
+[![GitHub Marketplace](https://img.shields.io/badge/GitHub-Marketplace-blue?logo=github)](https://github.com/marketplace/inkguard)
 
 ---
 
-## Quickstart
+## What it does
+
+1. **Triggered by labels** — add `docs` or `documentation` to a PR
+2. **Scans changed doc files** — `.md`, `.mdx`, `.txt`, `.rst`, `.adoc`
+3. **Skips technical regions** — code blocks, CLI flags, URLs, API paths
+4. **Posts a scored review** — grade A–D, per-file score bar, issues table
+5. **Approves or requests changes** — formal GitHub review, not just a comment
+
+## Install in 30 seconds
+
+```yaml
+# .github/workflows/inkguard.yml
+name: InkGuard
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+    paths: ["**.md", "**.txt", "**.rst"]
+permissions:
+  pull-requests: write
+  contents: read
+jobs:
+  inkguard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: { python-version: "3.12" }
+      - run: pip install flask
+      - env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IG_SCORE_THRESHOLD: "80"
+        run: python bot/inkguard_bot.py
+```
+
+## REST API
+
+| Endpoint | Method | Description |
+|---|---|---|
+| `/check` | POST | Check a single text |
+| `/batch` | POST | Check up to 50 documents |
+| `/upload` | POST | Upload a `.md` / `.txt` file |
+| `/export` | POST | Download JSON report |
+| `/health` | GET | Health check |
+| `/dashboard` | GET | Web dashboard (GitHub OAuth) |
+
+## Run locally
 
 ```bash
-pip install -r requirements.txt
+pip install flask
 python app.py
 # → http://localhost:5000
 ```
@@ -17,92 +62,14 @@ python app.py
 ## Run tests
 
 ```bash
-pytest tests/ -v
-# 55 passed
+pytest tests/ -v   # 86 tests, all passing
 ```
-
----
-
-## Features
-
-| Feature | Details |
-|---|---|
-| Grammar engine | 20+ rules: pronoun case, a/an, subject–verb agreement, punctuation, style |
-| Accuracy score | 0–100 score + letter grade per document |
-| Annotated output | HTML with inline highlights, colour-coded by error category |
-| Batch API | `/batch` — up to 50 documents, aggregate summary |
-| File upload | `/upload` — POST a `.txt` / `.md` file directly |
-| JSON export | `/export` — downloadable machine-readable report |
-| CI-ready | Works with `curl` + `jq` in GitHub Actions / GitLab CI |
-
----
-
-## REST API
-
-### Single document
-```bash
-curl -X POST http://localhost:5000/check \
-  -H "Content-Type: application/json" \
-  -d '{"text": "i is going to the store"}'
-```
-
-### Batch (CI pipelines)
-```bash
-curl -X POST http://localhost:5000/batch \
-  -H "Content-Type: application/json" \
-  -d '{"documents":[{"id":"readme","text":"..."},{"id":"contrib","text":"..."}]}'
-```
-
-### File upload
-```bash
-curl -X POST http://localhost:5000/upload -F "file=@README.md"
-```
-
-### Export report
-```bash
-curl -X POST http://localhost:5000/export \
-  -H "Content-Type: application/json" \
-  -d '{"text":"..."}' -o report.json
-```
-
-Full API reference: [docs/API.md](docs/API.md)
-
----
-
-## GitHub Actions
-
-```yaml
-- name: GrammarLens check
-  run: |
-    python app.py &
-    sleep 2
-    SCORE=$(curl -sf -X POST http://localhost:5000/check \
-      -H "Content-Type: application/json" \
-      -d "$(jq -n --arg t "$(cat README.md)" '{text:$t}')" \
-      | jq '.score')
-    echo "Grammar score: $SCORE"
-    [ "$SCORE" -ge 80 ] || exit 1
-```
-
----
-
-## Error categories
-
-| Category | Examples |
-|---|---|
-| `pronoun` | `i` → `I` |
-| `article` | `a apple` → `an apple` |
-| `agreement` | `They has` → `They have` |
-| `punctuation` | double periods, space before comma |
-| `style` | `utilize` → `use`, repeated words |
-
----
 
 ## Docs
 
-- [API Reference](docs/API.md)
-- [Deployment](docs/DEPLOYMENT.md)
-- [Contributing](docs/CONTRIBUTING.md)
+- [Setup guide](docs/SETUP.md)
+- [API reference](docs/API.md)
+- [Bot configuration](docs/BOT.md)
 
 ## License
 

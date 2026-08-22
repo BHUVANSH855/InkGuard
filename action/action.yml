@@ -1,0 +1,39 @@
+name: "InkGuard"
+description: "Documentation grammar bot — label-triggered PR review with approve/request-changes flow"
+author: "InkGuard"
+branding:
+  icon: "edit-3"
+  color: "blue"
+inputs:
+  score-threshold:
+    description: "Minimum passing score (0–100)"
+    required: false
+    default: "80"
+  fail-on-error:
+    description: "Exit 1 when score is below threshold"
+    required: false
+    default: "false"
+  require-label:
+    description: "Only run when PR has a trigger label"
+    required: false
+    default: "true"
+  labels:
+    description: "Comma-separated trigger labels"
+    required: false
+    default: "docs,documentation,content,inkguard,doc-review"
+runs:
+  using: "composite"
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: "3.12"
+    - run: pip install flask
+      shell: bash
+    - run: python ${{ github.action_path }}/../bot/inkguard_bot.py
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        IG_SCORE_THRESHOLD: ${{ inputs.score-threshold }}
+        IG_FAIL_ON_ERROR: ${{ inputs.fail-on-error }}
+        IG_REQUIRE_LABEL: ${{ inputs.require-label }}
+        IG_LABELS: ${{ inputs.labels }}

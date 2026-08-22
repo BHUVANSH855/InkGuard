@@ -1,243 +1,283 @@
-from flask import Flask, render_template, request, jsonify, send_file
-import re
-import json
+"""
+InkGuard — Flask API
+Endpoints: /check  /batch  /upload  /export  /health
+Dashboard: /dashboard  /auth/github  /auth/callback  /auth/logout
+"""
+
+from __future__ import annotations
+
 import io
+import json
 import os
+import secrets
+import urllib.parse
+import urllib.request
 from datetime import datetime, timezone
 
+from flask import (
+    Flask,
+    jsonify,
+    redirect,
+    render_template,
+    request,
+    send_file,
+    session,
+    url_for,
+)
+
+from engine import check, result_to_dict
+
 app = Flask(__name__)
+app.secret_key = os.environ.get("SECRET_KEY", secrets.token_hex(32))
+
+# GitHub OAuth
+GH_CLIENT_ID = os.environ.get("GITHUB_CLIENT_ID", "")
+GH_CLIENT_SECRET = os.environ.get("GITHUB_CLIENT_SECRET", "")
+GH_OAUTH_URL = "https://github.com/login/oauth/authorize"
+GH_TOKEN_URL = "https://github.com/login/oauth/access_token"
+GH_USER_URL = "https://api.github.com/user"
+
+# In-memory scan history (replace with DB in production)
+_scan_history: list[dict] = []
 
 # ─────────────────────────────────────────────
-#  Grammar Engine
+#  Helpers
 # ─────────────────────────────────────────────
 
-GRAMMAR_RULES = [
-    # Pronoun capitalisation — case-sensitive: only match lowercase i
-    (r"\bi\b", "I", "pronoun", "Pronoun 'I' must always be capitalised"),
-    # Article a/an
-    (r"\ba ([aeiouAEIOU]\w*)", r"an \1", "article", "Use 'an' before vowel sounds"),
-    (r"\ban ([^aeiouAEIOU\s]\w*)", r"a \1", "article", "Use 'a' before consonant sounds"),
-    # Subject–verb agreement
-    (r"\b(I|You|We|They) is\b", r"\1 are", "agreement", "Incorrect subject–verb agreement"),
-    (r"\b(He|She|It) are\b", r"\1 is", "agreement", "Singular subject requires 'is'"),
-    (r"\bI has\b", "I have", "agreement", "Incorrect tense usage with 'I'"),
-    (r"\bHe have\b", "He has", "agreement", "Third-person singular requires 'has'"),
-    (r"\bShe have\b", "She has", "agreement", "Third-person singular requires 'has'"),
-    (r"\bIt have\b", "It has", "agreement", "Third-person singular requires 'has'"),
-    (r"\bThey has\b", "They have", "agreement", "Plural subject requires 'have'"),
-    # Punctuation spacing
-    (r"\s,", ",", "punctuation", "Remove space before comma"),
-    (r",(?=\S)", ", ", "punctuation", "Add space after comma"),
-    (r"\s\.", ".", "punctuation", "Remove space before period"),
-    (r"\.\.+", ".", "punctuation", "Avoid repeated periods"),
-    (r"\?\?+", "?", "punctuation", "Avoid repeated question marks"),
-    (r"!!+", "!", "punctuation", "Avoid repeated exclamation marks"),
-    (r'""+"', '"', "punctuation", "Avoid duplicate quotation marks"),
-    # Repeated words
-    (r"\b(\w+)\s+\1\b", r"\1", "style", "Avoid repeated consecutive words"),
-    # Informal / wordy phrases
-    (r"\ba lot of\b", "many", "style", "Prefer concise formal expression"),
-    (r"\bin order to\b", "to", "style", "Prefer 'to' over 'in order to'"),
-    (r"\bdue to the fact that\b", "because", "style", "Prefer 'because' over 'due to the fact that'"),
-    (r"\bat this point in time\b", "now", "style", "Prefer 'now' over 'at this point in time'"),
-    (r"\butilize\b", "use", "style", "Prefer 'use' over 'utilize'"),
-    (r"\bfacilitate\b", "help", "style", "Prefer 'help' over 'facilitate' in documentation"),
-    # Passive voice signal (informational only)
-    (r"\bis being\b", "is being", "style", "Consider active voice instead of passive"),
-]
 
-CATEGORY_COLORS = {
-    "pronoun": "#7c3aed",
-    "article": "#b45309",
-    "agreement": "#b91c1c",
-    "punctuation": "#0369a1",
-    "style": "#065f46",
-}
+def _now() -> str:
+    return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def run_grammar_check(text: str) -> dict:
-    errors = []
-    seen = set()
-    corrected = text
-
-    # Sentence-start capitalisation
-    def cap_sentence(m):
-        return m.group(1) + m.group(2).upper()
-
-    corrected = re.sub(r"(^|\.\s+)([a-z])", cap_sentence, corrected)
-    if re.search(r"(^|\.\s+)([a-z])", text):
-        if "sentence-cap" not in seen:
-            seen.add("sentence-cap")
-            errors.append({
-                "issue": "lowercase sentence start",
-                "correction": "Capitalise the first letter",
-                "message": "Sentences must begin with a capital letter",
-                "category": "punctuation",
-                "color": CATEGORY_COLORS["punctuation"],
-            })
-
-    for pattern, replacement, category, explanation in GRAMMAR_RULES:
-        # Pronoun rule is case-sensitive (we only want lowercase i, not capital I)
-        flags = 0 if category == "pronoun" else re.IGNORECASE
-        matches = list(re.finditer(pattern, corrected, flags=flags))
-        for m in matches:
-            issue = m.group()
-            # Skip if the matched text already equals the replacement (no-op fix)
-            expected = replacement if isinstance(replacement, str) else ""
-            if isinstance(replacement, str) and issue == expected:
-                continue
-            issue_key = issue.lower().strip()
-            if issue_key not in seen:
-                seen.add(issue_key)
-                correction = (
-                    replacement if isinstance(replacement, str)
-                    else re.sub(pattern, replacement, issue, flags=flags)
-                )
-                errors.append({
-                    "issue": issue,
-                    "correction": correction,
-                    "message": explanation,
-                    "category": category,
-                    "color": CATEGORY_COLORS.get(category, "#374151"),
-                })
-        corrected = re.sub(pattern, replacement, corrected, flags=flags)
-
-    # Trailing punctuation
-    if corrected.strip() and corrected.strip()[-1] not in ".!?":
-        corrected = corrected.rstrip() + "."
-        if "trailing-punct" not in seen:
-            errors.append({
-                "issue": "Missing end punctuation",
-                "correction": ".",
-                "message": "Sentences should end with proper punctuation",
-                "category": "punctuation",
-                "color": CATEGORY_COLORS["punctuation"],
-            })
-
-    total = len(text.split())
-    error_count = len(errors)
-    score = max(0, min(100, 100 - int((error_count / max(total, 1)) * 150)))
-    grade = "A" if score >= 90 else "B" if score >= 75 else "C" if score >= 60 else "D"
-
-    return {
-        "corrected": corrected,
-        "errors": errors,
-        "score": score,
-        "grade": grade,
-        "word_count": total,
-        "error_count": error_count,
-        "categories": list({e["category"] for e in errors}),
-    }
+def _gh_api(url: str, token: str) -> dict | None:
+    req = urllib.request.Request(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Accept": "application/json",
+            "User-Agent": "InkGuard-Bot/1.0",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req) as r:
+            return json.loads(r.read())
+    except urllib.error.URLError:
+        return None
 
 
-def highlight_errors(text: str, errors: list) -> str:
-    highlighted = text
-    for e in errors:
-        if e["issue"] not in ("Missing end punctuation", "lowercase sentence start"):
-            color = e.get("color", "#b91c1c")
-            highlighted = re.sub(
-                re.escape(e["issue"]),
-                f"<mark class='gl-mark' data-cat='{e['category']}' style='--mark-color:{color}' title=\"{e['message']}\">{e['issue']}</mark>",
-                highlighted,
-                count=1,
-                flags=re.IGNORECASE,
-            )
-    return highlighted
+def _login_required(f):
+    from functools import wraps
+
+    @wraps(f)
+    def wrapped(*args, **kwargs):
+        if "user" not in session:
+            return redirect(url_for("dashboard_login"))
+        return f(*args, **kwargs)
+
+    return wrapped
 
 
 # ─────────────────────────────────────────────
-#  Routes
+#  Public landing page
 # ─────────────────────────────────────────────
+
 
 @app.route("/")
 def index():
-    return render_template("index.html")
+    return render_template("landing.html")
+
+
+# ─────────────────────────────────────────────
+#  Grammar API
+# ─────────────────────────────────────────────
+
+
+@app.route("/health")
+def health():
+    return jsonify({"status": "ok", "version": "1.0.0", "name": "InkGuard"})
 
 
 @app.route("/check", methods=["POST"])
-def check():
+def api_check():
     data = request.get_json(silent=True) or {}
     text = data.get("text", "").strip()
     if not text:
         return jsonify({"error": "No text provided"}), 400
-
-    result = run_grammar_check(text)
-    result["highlighted"] = highlight_errors(text, result["errors"])
-    return jsonify(result)
+    result = check(text)
+    d = result_to_dict(result)
+    _scan_history.append(
+        {
+            "source": data.get("source", "api"),
+            "score": d["score"],
+            "grade": d["grade"],
+            "error_count": d["error_count"],
+            "word_count": d["word_count"],
+            "checked_at": _now(),
+        }
+    )
+    return jsonify(d)
 
 
 @app.route("/batch", methods=["POST"])
-def batch():
-    """
-    Accept JSON: { "documents": [{"id": "readme", "text": "..."}, ...] }
-    Returns per-document results + aggregate summary.
-    Designed for CI pipelines and documentation bots.
-    """
+def api_batch():
     data = request.get_json(silent=True) or {}
     docs = data.get("documents", [])
     if not docs:
         return jsonify({"error": "No documents provided"}), 400
-
     results = []
-    for doc in docs[:50]:  # cap at 50
+    for doc in docs[:50]:
         doc_id = doc.get("id", "unnamed")
         text = doc.get("text", "")
         if not text.strip():
             results.append({"id": doc_id, "skipped": True})
             continue
-        r = run_grammar_check(text)
-        r["highlighted"] = highlight_errors(text, r["errors"])
+        r = result_to_dict(check(text))
         r["id"] = doc_id
         results.append(r)
-
-    total_errors = sum(r.get("error_count", 0) for r in results if not r.get("skipped"))
-    avg_score = (
-        sum(r.get("score", 0) for r in results if not r.get("skipped"))
-        // max(1, sum(1 for r in results if not r.get("skipped")))
-    )
-
-    return jsonify({
-        "results": results,
-        "summary": {
-            "total_documents": len(docs),
-            "total_errors": total_errors,
-            "average_score": avg_score,
-            "checked_at": datetime.now(timezone.utc).isoformat().replace("+00:00", "Z"),
+    checked = [r for r in results if not r.get("skipped")]
+    avg = sum(r["score"] for r in checked) // max(len(checked), 1)
+    total_err = sum(r["error_count"] for r in checked)
+    return jsonify(
+        {
+            "results": results,
+            "summary": {
+                "total_documents": len(docs),
+                "checked": len(checked),
+                "total_errors": total_err,
+                "average_score": avg,
+                "checked_at": _now(),
+            },
         }
-    })
+    )
 
 
 @app.route("/upload", methods=["POST"])
-def upload():
-    """Accept a plain-text file upload and return grammar results."""
+def api_upload():
     f = request.files.get("file")
     if not f:
         return jsonify({"error": "No file uploaded"}), 400
-    try:
-        text = f.read().decode("utf-8", errors="replace")
-    except Exception:
-        return jsonify({"error": "Could not read file"}), 400
-
-    result = run_grammar_check(text)
-    result["highlighted"] = highlight_errors(text, result["errors"])
-    result["filename"] = f.filename
-    return jsonify(result)
+    text = f.read().decode("utf-8", errors="replace")
+    r = result_to_dict(check(text))
+    r["filename"] = f.filename
+    return jsonify(r)
 
 
 @app.route("/export", methods=["POST"])
-def export_report():
-    """Return a JSON report ready for download."""
+def api_export():
     data = request.get_json(silent=True) or {}
     text = data.get("text", "").strip()
-    result = run_grammar_check(text)
-    result["generated_at"] = datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
-    result.pop("highlighted", None)
-
-    buf = io.BytesIO(json.dumps(result, indent=2).encode())
+    r = result_to_dict(check(text))
+    r["generated_at"] = _now()
+    r.pop("highlighted", None)
+    buf = io.BytesIO(json.dumps(r, indent=2).encode())
     buf.seek(0)
-    return send_file(buf, mimetype="application/json",
-                     as_attachment=True, download_name="grammarlens-report.json")
+    return send_file(
+        buf,
+        mimetype="application/json",
+        as_attachment=True,
+        download_name="inkguard-report.json",
+    )
+
+
+# ─────────────────────────────────────────────
+#  Dashboard — GitHub OAuth
+# ─────────────────────────────────────────────
+
+
+@app.route("/dashboard/login")
+def dashboard_login():
+    return render_template(
+        "dashboard_login.html", gh_client_id=GH_CLIENT_ID, has_oauth=bool(GH_CLIENT_ID)
+    )
+
+
+@app.route("/auth/github")
+def auth_github():
+    state = secrets.token_hex(16)
+    session["oauth_state"] = state
+    params = urllib.parse.urlencode(
+        {
+            "client_id": GH_CLIENT_ID,
+            "redirect_uri": url_for("auth_callback", _external=True),
+            "scope": "read:user",
+            "state": state,
+        }
+    )
+    return redirect(f"{GH_OAUTH_URL}?{params}")
+
+
+@app.route("/auth/callback")
+def auth_callback():
+    code = request.args.get("code")
+    state = request.args.get("state")
+    if not code or state != session.pop("oauth_state", None):
+        return redirect(url_for("dashboard_login"))
+    # Exchange code for token
+    token_data = urllib.parse.urlencode(
+        {
+            "client_id": GH_CLIENT_ID,
+            "client_secret": GH_CLIENT_SECRET,
+            "code": code,
+        }
+    ).encode()
+    req = urllib.request.Request(
+        GH_TOKEN_URL,
+        data=token_data,
+        headers={
+            "Accept": "application/json",
+            "Content-Type": "application/x-www-form-urlencoded",
+        },
+    )
+    try:
+        with urllib.request.urlopen(req) as resp:
+            token_resp = json.loads(resp.read())
+    except urllib.error.URLError:
+        return redirect(url_for("dashboard_login"))
+    access_token = token_resp.get("access_token")
+    if not access_token:
+        return redirect(url_for("dashboard_login"))
+    user = _gh_api(GH_USER_URL, access_token)
+    if not user:
+        return redirect(url_for("dashboard_login"))
+    session["user"] = {
+        "login": user.get("login"),
+        "name": user.get("name") or user.get("login"),
+        "avatar": user.get("avatar_url"),
+        "token": access_token,
+    }
+    return redirect(url_for("dashboard"))
+
+
+@app.route("/auth/logout")
+def auth_logout():
+    session.clear()
+    return redirect(url_for("index"))
+
+
+@app.route("/dashboard")
+@_login_required
+def dashboard():
+    user = session["user"]
+    recent = list(reversed(_scan_history[-50:]))
+    total = len(_scan_history)
+    avg = (sum(s["score"] for s in _scan_history) // total) if total else 0
+    total_errors = sum(s["error_count"] for s in _scan_history)
+    return render_template(
+        "dashboard.html",
+        user=user,
+        recent=recent,
+        total=total,
+        avg_score=avg,
+        total_errors=total_errors,
+    )
+
+
+@app.route("/dashboard/scan")
+@_login_required
+def dashboard_scan():
+    return render_template("dashboard_scan.html", user=session["user"])
 
 
 if __name__ == "__main__":
-    app.run(debug=False, host="0.0.0.0", port=5000)
+    port = int(os.environ.get("PORT", "5000"))
+    app.run(debug=False, host="0.0.0.0", port=port)
