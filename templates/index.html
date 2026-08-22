@@ -1,106 +1,234 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <title>English Grammar Checker (AI)</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GrammarLens — Documentation Grammar Tool</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/static/css/style.css">
 </head>
 <body>
 
-<div class="container">
-    <h2>AI-Based English Grammar Checker</h2>
+<!-- ── Header ── -->
+<header class="gl-header">
+  <div class="gl-header-inner">
+    <div class="gl-logo">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none">
+        <rect width="28" height="28" rx="7" fill="#0f172a"/>
+        <path d="M7 9h14M7 14h10M7 19h12" stroke="#38bdf8" stroke-width="2" stroke-linecap="round"/>
+        <circle cx="22" cy="19" r="3" fill="#22d3ee"/>
+      </svg>
+      <span class="gl-logo-text">GrammarLens</span>
+      <span class="gl-badge">v2.0</span>
+    </div>
+    <nav class="gl-nav">
+      <a href="#editor" class="gl-nav-link active" data-tab="editor">Editor</a>
+      <a href="#batch" class="gl-nav-link" data-tab="batch">Batch API</a>
+      <a href="#docs" class="gl-nav-link" data-tab="docs">API Docs</a>
+    </nav>
+    <div class="gl-header-actions">
+      <a href="https://github.com/BHUVANSH855/english-grammar-checker" target="_blank" class="gl-btn-ghost">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+        GitHub
+      </a>
+    </div>
+  </div>
+</header>
 
-    <form method="POST" onsubmit="syncText()">
-        <div id="editor"
-             class="editor"
-             contenteditable="true"
-             placeholder="Enter your text...">
-            {% if highlighted_text %}
-                {{ highlighted_text | safe }}
-            {% else %}
-                {{ original_text }}
-            {% endif %}
+<!-- ── Tab: Editor ── -->
+<main id="tab-editor" class="gl-tab active">
 
+  <!-- Hero strip -->
+  <section class="gl-hero">
+    <div class="gl-hero-inner">
+      <p class="gl-hero-eyebrow">Documentation-grade grammar checking</p>
+      <h1 class="gl-hero-title">Write docs that <span class="gl-accent">read right</span>.</h1>
+      <p class="gl-hero-sub">GrammarLens analyses grammar, style, and agreement in real time. Built for teams, CI pipelines, and open-source maintainers.</p>
+    </div>
+  </section>
+
+  <!-- Main workspace -->
+  <div class="gl-workspace">
+
+    <!-- Left: editor -->
+    <section class="gl-panel gl-editor-panel">
+      <div class="gl-panel-header">
+        <span class="gl-panel-title">Input</span>
+        <div class="gl-toolbar">
+          <label class="gl-btn-ghost gl-upload-label" title="Upload .txt or .md file">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+            Upload
+            <input type="file" id="fileInput" accept=".txt,.md,.rst" hidden>
+          </label>
+          <button class="gl-btn-ghost" id="clearBtn">Clear</button>
         </div>
-        <input type="hidden" name="text" id="hiddenText">
-        <br><br>
-        <button type="submit">Check</button>
-        <button type="button" class="clear-btn" onclick="window.location.href='/'">
-            Clear Text
+      </div>
+      <div
+        id="editor"
+        class="gl-editor"
+        contenteditable="true"
+        data-placeholder="Paste your documentation, README, or any text here…"
+        spellcheck="false"
+      ></div>
+      <div class="gl-editor-footer">
+        <span id="wordCount" class="gl-meta">0 words</span>
+        <button class="gl-btn-primary" id="checkBtn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Analyse
         </button>
-        <p style="font-size:13px;color:gray;text-align:center;">
-            🤖 AI is analyzing grammar patterns and generating corrections...
-        </p>
-    </form>
-    {% if score is defined %}
-        <div class="score-box">
-            Grammar Accuracy: <b>{{ score }}%</b>
+      </div>
+    </section>
+
+    <!-- Right: results -->
+    <section class="gl-panel gl-results-panel" id="resultsPanel">
+      <div id="resultsEmpty" class="gl-empty">
+        <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><path d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/></svg>
+        <p>Results will appear here</p>
+      </div>
+      <div id="resultsContent" class="gl-results-content hidden">
+
+        <!-- Score row -->
+        <div class="gl-score-row">
+          <div class="gl-score-ring-wrap">
+            <svg class="gl-score-ring" viewBox="0 0 64 64">
+              <circle cx="32" cy="32" r="26" fill="none" stroke="#e2e8f0" stroke-width="7"/>
+              <circle id="scoreArc" cx="32" cy="32" r="26" fill="none" stroke="#22d3ee" stroke-width="7"
+                stroke-linecap="round" stroke-dasharray="163.4" stroke-dashoffset="163.4"
+                transform="rotate(-90 32 32)"/>
+            </svg>
+            <span id="scoreNum" class="gl-score-num">—</span>
+          </div>
+          <div class="gl-score-meta">
+            <p class="gl-score-grade" id="scoreGrade">—</p>
+            <p class="gl-score-sub" id="scoreSub">Run analysis to see score</p>
+            <div class="gl-chips" id="categoryChips"></div>
+          </div>
+          <button class="gl-btn-ghost gl-export-btn" id="exportBtn" title="Export JSON report">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 01-2 2H5a2 2 0 01-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            Export
+          </button>
         </div>
-    {% endif %}
 
-    {% if highlighted_text %}
-        <h3 class="section-title">Highlighted Errors</h3>
-        <div class="highlight-box">
-            {{ highlighted_text | safe }}
+        <!-- Highlighted preview -->
+        <div class="gl-section">
+          <h3 class="gl-section-title">Annotated Text</h3>
+          <div id="highlightBox" class="gl-highlight-box"></div>
         </div>
-    {% endif %}
 
-    {% if corrected_text %}
-        <h3 class="section-title">Corrected Output</h3>
-        <p><strong>{{ corrected_text }}</strong></p>
-    {% endif %}
-
-    {% if errors %}
-        <h3 class="section-title">AI Grammar Insights</h3>
-
-        <div class="error-container">
-            {% for e in errors %}
-            <div class="error-card">
-                <div class="error-line">
-                    <span class="label error">❌ Error</span>
-                    <span class="text">"{{ e.issue }}"</span>
-                </div>
-            
-                <div class="error-line">
-                    <span class="label correction">✔️ Correction</span>
-                    <span class="text">{{ e.correction }}</span>
-                </div>
-            
-                <div class="error-line">
-                    <span class="label reason">📌 Reason</span>
-                    <span class="text">{{ e.message }}</span>
-                </div>
-            </div>
-            {% endfor %}
+        <!-- Corrected text -->
+        <div class="gl-section">
+          <h3 class="gl-section-title">Corrected Version
+            <button class="gl-copy-btn" id="copyBtn" title="Copy corrected text">Copy</button>
+          </h3>
+          <div id="correctedBox" class="gl-corrected-box"></div>
         </div>
-    {% endif %}
-</div>
-<hr style="margin-top:30px;">
 
-<div class="ai-info">
-    <h4>About This AI Grammar Checker</h4>
-    <p>
-        This project is an <b>AI-inspired Grammar Correction System</b> that
-        analyzes user input using Natural Language Processing (NLP) rules.
-        It detects grammatical patterns, generates corrections, and explains
-        errors in a human-readable way similar to prompt-based Generative AI models.
-    </p>
-    <p>
-        The system simulates how AI models respond to text prompts by:
-    </p>
+        <!-- Errors list -->
+        <div class="gl-section" id="errorsSection">
+          <h3 class="gl-section-title">Issues <span id="errorBadge" class="gl-count-badge">0</span></h3>
+          <div id="errorList" class="gl-error-list"></div>
+        </div>
 
-    <ul>
-        <li>Identifying grammatical mistakes</li>
-        <li>Generating corrected text</li>
-        <li>Providing contextual explanations</li>
-        <li>Calculating grammar accuracy</li>
-    </ul>
-</div>
-<script>
-function syncText() {
-    document.getElementById("hiddenText").value =
-        document.getElementById("editor").innerText;
-}
-</script>
+      </div>
+    </section>
+
+  </div>
+</main>
+
+<!-- ── Tab: Batch API ── -->
+<main id="tab-batch" class="gl-tab hidden">
+  <div class="gl-batch-wrap">
+    <h2 class="gl-batch-title">Batch Analysis</h2>
+    <p class="gl-batch-desc">Send multiple documents in one request. Built for CI/CD and documentation bots.</p>
+
+    <div class="gl-batch-layout">
+      <div class="gl-panel">
+        <div class="gl-panel-header"><span class="gl-panel-title">JSON Input</span></div>
+        <textarea id="batchInput" class="gl-batch-textarea" spellcheck="false">{
+  "documents": [
+    { "id": "readme", "text": "this is a example document. it have errors." },
+    { "id": "contributing", "text": "Please read the guidelines before you submit a pull request." }
+  ]
+}</textarea>
+        <div class="gl-editor-footer">
+          <span class="gl-meta">POST /batch</span>
+          <button class="gl-btn-primary" id="batchRunBtn">Run Batch</button>
+        </div>
+      </div>
+
+      <div class="gl-panel">
+        <div class="gl-panel-header"><span class="gl-panel-title">Response</span></div>
+        <pre id="batchOutput" class="gl-batch-output">// Results appear here</pre>
+      </div>
+    </div>
+  </div>
+</main>
+
+<!-- ── Tab: API Docs ── -->
+<main id="tab-docs" class="gl-tab hidden">
+  <div class="gl-docs-wrap">
+    <h2 class="gl-batch-title">REST API Reference</h2>
+    <p class="gl-batch-desc">GrammarLens exposes a simple HTTP API. Integrate it into any pipeline.</p>
+
+    <div class="gl-api-grid">
+
+      <div class="gl-api-card">
+        <div class="gl-api-method post">POST</div>
+        <code class="gl-api-path">/check</code>
+        <p class="gl-api-desc">Analyse a single block of text.</p>
+        <pre class="gl-code">curl -X POST /check \
+  -H "Content-Type: application/json" \
+  -d '{"text": "i is going to the store"}'</pre>
+        <div class="gl-api-returns">Returns: corrected, errors[], score, grade, word_count</div>
+      </div>
+
+      <div class="gl-api-card">
+        <div class="gl-api-method post">POST</div>
+        <code class="gl-api-path">/batch</code>
+        <p class="gl-api-desc">Analyse up to 50 documents in one call. Perfect for CI pipelines.</p>
+        <pre class="gl-code">curl -X POST /batch \
+  -H "Content-Type: application/json" \
+  -d '{"documents":[{"id":"readme","text":"..."}]}'</pre>
+        <div class="gl-api-returns">Returns: results[], summary{total_errors, avg_score}</div>
+      </div>
+
+      <div class="gl-api-card">
+        <div class="gl-api-method post">POST</div>
+        <code class="gl-api-path">/upload</code>
+        <p class="gl-api-desc">Upload a plain-text or Markdown file directly.</p>
+        <pre class="gl-code">curl -X POST /upload \
+  -F "file=@README.md"</pre>
+        <div class="gl-api-returns">Returns: same as /check + filename</div>
+      </div>
+
+      <div class="gl-api-card">
+        <div class="gl-api-method post">POST</div>
+        <code class="gl-api-path">/export</code>
+        <p class="gl-api-desc">Download a full JSON report for a given text.</p>
+        <pre class="gl-code">curl -X POST /export \
+  -H "Content-Type: application/json" \
+  -d '{"text":"..."}' \
+  -o report.json</pre>
+        <div class="gl-api-returns">Returns: report.json download</div>
+      </div>
+
+    </div>
+
+    <div class="gl-ci-card">
+      <h3>GitHub Actions Example</h3>
+      <pre class="gl-code">- name: GrammarLens check
+  run: |
+    curl -sf -X POST http://localhost:5000/batch \
+      -H "Content-Type: application/json" \
+      -d "$(jq -n --arg t "$(cat README.md)" \
+           '{documents:[{id:"readme",text:$t}]}')" \
+    | jq '.summary'</pre>
+    </div>
+
+  </div>
+</main>
+
+<script src="/static/js/app.js"></script>
 </body>
 </html>

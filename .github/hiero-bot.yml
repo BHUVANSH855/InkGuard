@@ -1,8 +1,0 @@
-welcome:
-  enabled: true
-
-issues:
-  autoComment: true
-
-pullRequests:
-  autoReview: true
