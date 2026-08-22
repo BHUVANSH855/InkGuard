@@ -1,0 +1,358 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>InkGuard — Documentation Grammar Bot for GitHub</title>
+  <meta name="description" content="InkGuard automatically reviews grammar in every pull request. Label-triggered, technical-doc aware, zero config. Built for MDN-scale documentation teams.">
+  <meta property="og:title" content="InkGuard — Documentation Grammar Bot">
+  <meta property="og:description" content="Automatically reviews grammar in every PR. Approves clean docs, requests changes on errors.">
+  <meta property="og:url" content="https://bhuvansh855.github.io/InkGuard/">
+  <meta property="og:type" content="website">
+  <meta name="twitter:card" content="summary_large_image">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+ 
+  <!-- NAV -->
+  <header class="nav" id="nav">
+    <div class="nav-inner">
+      <a href="#" class="logo" aria-label="InkGuard home">
+        <svg class="logo-mark" width="32" height="32" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+          <rect width="32" height="32" rx="8" fill="#0D1117"/>
+          <path d="M8 10h16M8 15.5h11M8 21h13" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+          <circle cx="24" cy="21" r="3" fill="#22D3EE"/>
+          <circle cx="24" cy="21" r="1.2" fill="#0D1117"/>
+        </svg>
+        <span class="logo-text">InkGuard</span>
+      </a>
+      <nav class="nav-links" aria-label="Main navigation">
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/BHUVANSH855/InkGuard" target="_blank" rel="noopener">Docs</a>
+      </nav>
+      <a href="https://github.com/marketplace" target="_blank" rel="noopener" class="nav-cta">
+        Get on Marketplace
+      </a>
+      <button class="nav-hamburger" id="hamburger" aria-label="Open menu" aria-expanded="false">
+        <span></span><span></span><span></span>
+      </button>
+    </div>
+    <div class="nav-mobile" id="mobileMenu" aria-hidden="true">
+      <a href="#how">How it works</a>
+      <a href="#features">Features</a>
+      <a href="#install">Install</a>
+      <a href="https://github.com/BHUVANSH855/InkGuard" target="_blank" rel="noopener">Docs</a>
+      <a href="https://github.com/marketplace" target="_blank" rel="noopener" class="mobile-cta">Get on Marketplace</a>
+    </div>
+  </header>
+ 
+  <!-- HERO -->
+  <section class="hero" aria-label="Hero">
+    <div class="hero-inner">
+      <div class="hero-text">
+        <div class="hero-eyebrow">
+          <span class="eyebrow-dot"></span>
+          GitHub Marketplace Bot
+        </div>
+        <h1 class="hero-title">
+          Every PR deserves<br>
+          <em>a grammar review.</em>
+        </h1>
+        <p class="hero-body">
+          InkGuard watches your documentation pull requests, catches grammar errors in prose while skipping code, and posts a scored review — approving clean docs or requesting changes on errors.
+        </p>
+        <div class="hero-actions">
+          <a href="https://github.com/BHUVANSH855/InkGuard" target="_blank" rel="noopener" class="btn-primary">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+            Install free on GitHub
+          </a>
+          <a href="#how" class="btn-ghost">See how it works</a>
+        </div>
+        <div class="hero-stats">
+          <div class="stat"><span class="stat-val">86</span><span class="stat-label">tests passing</span></div>
+          <div class="stat-div"></div>
+          <div class="stat"><span class="stat-val">30+</span><span class="stat-label">grammar rules</span></div>
+          <div class="stat-div"></div>
+          <div class="stat"><span class="stat-val">0</span><span class="stat-label">config required</span></div>
+        </div>
+      </div>
+ 
+      <!-- PR Comment Preview -->
+      <div class="hero-visual" aria-label="Example InkGuard PR comment">
+        <div class="pr-comment">
+          <div class="pr-comment-header">
+            <div class="pr-avatar" aria-hidden="true">IG</div>
+            <div class="pr-meta">
+              <span class="pr-bot-name">inkguard[bot]</span>
+              <span class="pr-time">just now</span>
+            </div>
+            <div class="pr-badge approved">✅ Docs approved</div>
+          </div>
+          <div class="pr-body">
+            <div class="pr-title">InkGuard — Documentation Review</div>
+            <div class="pr-subtitle">Average score: 91/100 · 1 issue · 2 files checked</div>
+            <div class="pr-files">
+              <div class="pr-file ok">
+                <div class="pr-file-name">
+                  <span class="grade-dot green"></span>
+                  <code>README.md</code>
+                </div>
+                <div class="pr-file-bar">
+                  <div class="bar-track"><div class="bar-fill" style="width:100%;background:#4ade80"></div></div>
+                  <span class="bar-label">Grade A · 100/100</span>
+                </div>
+              </div>
+              <div class="pr-file warn">
+                <div class="pr-file-name">
+                  <span class="grade-dot yellow"></span>
+                  <code>docs/guide.md</code>
+                </div>
+                <div class="pr-file-bar">
+                  <div class="bar-track"><div class="bar-fill" style="width:82%;background:#fbbf24"></div></div>
+                  <span class="bar-label">Grade B · 82/100</span>
+                </div>
+              </div>
+            </div>
+            <div class="pr-issue">
+              <span class="issue-cat">💡 style</span>
+              <span class="issue-found"><code>utilize</code></span>
+              <span class="issue-arrow">→</span>
+              <span class="issue-fix"><code>use</code></span>
+              <span class="issue-rule">Prefer 'use' over 'utilize'</span>
+            </div>
+            <div class="pr-skip-note">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="currentColor" aria-hidden="true"><path d="M8 0a8 8 0 100 16A8 8 0 008 0zm0 4a1 1 0 110 2 1 1 0 010-2zm0 4a1 1 0 011 1v3a1 1 0 11-2 0V9a1 1 0 011-1z"/></svg>
+              Code blocks, CLI flags, and URLs automatically skipped
+            </div>
+          </div>
+        </div>
+        <div class="visual-label">What your team sees on every PR</div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- USED BY -->
+  <div class="used-by">
+    <span class="used-by-label">Built for documentation teams at scale</span>
+    <div class="used-by-logos">
+      <span>MDN Web Docs</span>
+      <span>Grafana Labs</span>
+      <span>Red Hat Docs</span>
+      <span>Mintlify</span>
+      <span>Datadog</span>
+    </div>
+  </div>
+ 
+  <!-- HOW IT WORKS -->
+  <section class="section how" id="how">
+    <div class="section-inner">
+      <p class="section-eyebrow">How it works</p>
+      <h2 class="section-title">Three steps. Zero friction.</h2>
+      <div class="steps">
+        <div class="step" data-reveal>
+          <div class="step-icon">🏷️</div>
+          <h3>Label your PR</h3>
+          <p>Add <code>docs</code>, <code>documentation</code>, or <code>inkguard</code> to any pull request. InkGuard only activates on labelled PRs — no noise on code-only changes.</p>
+        </div>
+        <div class="step-connector" aria-hidden="true"></div>
+        <div class="step" data-reveal>
+          <div class="step-icon">🧠</div>
+          <h3>InkGuard analyses</h3>
+          <p>Every changed <code>.md</code>, <code>.txt</code>, and <code>.rst</code> file is scanned. Fenced code blocks, CLI flags (<code>--flag</code>), API paths, and URLs are automatically skipped.</p>
+        </div>
+        <div class="step-connector" aria-hidden="true"></div>
+        <div class="step" data-reveal>
+          <div class="step-icon">✅</div>
+          <h3>Approve or request changes</h3>
+          <p>Clean docs get a formal GitHub <em>Approve</em> review with a score. Errors get a <em>Request changes</em> review with an issues table, exact suggestion, and the rule broken.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- FEATURES -->
+  <section class="section features" id="features">
+    <div class="section-inner">
+      <p class="section-eyebrow">Features</p>
+      <h2 class="section-title">What makes InkGuard different.</h2>
+      <div class="feat-grid">
+        <div class="feat-card" data-reveal>
+          <div class="feat-icon-wrap blue">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 01-2 2H5a2 2 0 01-2-2V5a2 2 0 012-2h11"/></svg>
+          </div>
+          <h3>Label-triggered only</h3>
+          <p>Runs only when a PR carries a doc-related label. Fully configurable. Zero interference with code reviews.</p>
+        </div>
+        <div class="feat-card" data-reveal>
+          <div class="feat-icon-wrap cyan">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+          </div>
+          <h3>Technical-doc aware</h3>
+          <p>Skips fenced code, inline code, CLI flags, API paths, URLs, frontmatter, and markdown tables. No false positives on technical content.</p>
+        </div>
+        <div class="feat-card" data-reveal>
+          <div class="feat-icon-wrap green">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M22 11.08V12a10 10 0 11-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+          </div>
+          <h3>Approve or request changes</h3>
+          <p>Posts a formal GitHub review — not just a comment. High scores get approved. Low scores block the merge until fixed.</p>
+        </div>
+        <div class="feat-card" data-reveal>
+          <div class="feat-icon-wrap purple">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
+          </div>
+          <h3>Scored and graded</h3>
+          <p>Every file gets a 0–100 score and an A–D grade. Per-file breakdown, total errors, and word count on every review.</p>
+        </div>
+        <div class="feat-card" data-reveal>
+          <div class="feat-icon-wrap amber">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M21 15a2 2 0 01-2 2H7l-4 4V5a2 2 0 012-2h14a2 2 0 012 2z"/></svg>
+          </div>
+          <h3>No comment spam</h3>
+          <p>InkGuard updates its own comment on every commit push. One clean comment per PR, always showing the latest state.</p>
+        </div>
+        <div class="feat-card" data-reveal>
+          <div class="feat-icon-wrap teal">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="12" cy="12" r="3"/><path d="M12 1v4M12 19v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M1 12h4M19 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83"/></svg>
+          </div>
+          <h3>Zero config</h3>
+          <p>Copy one workflow file. No API keys, no external accounts. <code>GITHUB_TOKEN</code> is injected automatically by GitHub Actions.</p>
+        </div>
+        <div class="feat-card" data-reveal>
+          <div class="feat-icon-wrap red">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+          </div>
+          <h3>REST API included</h3>
+          <p>Four endpoints: <code>/check</code>, <code>/batch</code>, <code>/upload</code>, <code>/export</code>. Pipe InkGuard into any CI tool or documentation pipeline.</p>
+        </div>
+        <div class="feat-card" data-reveal>
+          <div class="feat-icon-wrap slate">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M9 21V9"/></svg>
+          </div>
+          <h3>Dashboard</h3>
+          <p>GitHub OAuth login. View scan history, score trends, and per-file results for your whole organisation in one place.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- INSTALL -->
+  <section class="section install" id="install">
+    <div class="section-inner">
+      <p class="section-eyebrow">Get started</p>
+      <h2 class="section-title">Up and running in 2 minutes.</h2>
+      <div class="install-layout">
+        <div class="install-steps">
+          <div class="install-step">
+            <div class="install-num">1</div>
+            <div class="install-step-body">
+              <h3>Copy the workflow</h3>
+              <p>Add <code>.github/workflows/inkguard.yml</code> to your repository. That's the only file you need.</p>
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="install-num">2</div>
+            <div class="install-step-body">
+              <h3>Label a PR</h3>
+              <p>Open any pull request that touches docs. Add the <code>docs</code> or <code>documentation</code> label.</p>
+            </div>
+          </div>
+          <div class="install-step">
+            <div class="install-num">3</div>
+            <div class="install-step-body">
+              <h3>InkGuard reviews</h3>
+              <p>The bot posts its review within seconds. Clean docs get approved. Issues get a detailed comment.</p>
+            </div>
+          </div>
+        </div>
+        <div class="code-panel">
+          <div class="code-panel-header">
+            <span class="code-dot red-dot"></span>
+            <span class="code-dot yellow-dot"></span>
+            <span class="code-dot green-dot"></span>
+            <span class="code-filename">.github/workflows/inkguard.yml</span>
+            <button class="copy-btn" id="copyBtn" aria-label="Copy code">Copy</button>
+          </div>
+          <pre class="code-body"><code id="workflowCode">name: InkGuard
+ 
+on:
+  pull_request:
+    types: [opened, synchronize, labeled]
+    paths:
+      - "**.md"
+      - "**.txt"
+      - "**.rst"
+ 
+permissions:
+  pull-requests: write
+  contents: read
+ 
+jobs:
+  inkguard:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install flask
+      - name: Run InkGuard
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          IG_SCORE_THRESHOLD: "80"
+          IG_LABELS: "docs,documentation,inkguard"
+        run: python bot/inkguard_bot.py</code></pre>
+        </div>
+      </div>
+      <div class="install-cta-row">
+        <a href="https://github.com/BHUVANSH855/InkGuard" target="_blank" rel="noopener" class="btn-primary btn-large">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          View on GitHub
+        </a>
+        <a href="https://github.com/BHUVANSH855/InkGuard/blob/main/docs/SETUP.md" target="_blank" rel="noopener" class="btn-ghost btn-large">Read the docs →</a>
+      </div>
+    </div>
+  </section>
+ 
+  <!-- FOOTER -->
+  <footer class="footer">
+    <div class="footer-inner">
+      <div class="footer-left">
+        <a href="#" class="logo footer-logo">
+          <svg class="logo-mark" width="24" height="24" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+            <rect width="32" height="32" rx="8" fill="#0D1117"/>
+            <path d="M8 10h16M8 15.5h11M8 21h13" stroke="#38BDF8" stroke-width="2" stroke-linecap="round"/>
+            <circle cx="24" cy="21" r="3" fill="#22D3EE"/>
+            <circle cx="24" cy="21" r="1.2" fill="#0D1117"/>
+          </svg>
+          <span class="logo-text">InkGuard</span>
+        </a>
+        <p class="footer-tagline">Documentation grammar bot for GitHub.</p>
+      </div>
+      <div class="footer-links">
+        <div class="footer-col">
+          <p class="footer-col-label">Product</p>
+          <a href="#how">How it works</a>
+          <a href="#features">Features</a>
+          <a href="#install">Install</a>
+        </div>
+        <div class="footer-col">
+          <p class="footer-col-label">Resources</p>
+          <a href="https://github.com/BHUVANSH855/InkGuard" target="_blank" rel="noopener">GitHub</a>
+          <a href="https://github.com/BHUVANSH855/InkGuard/blob/main/docs/SETUP.md" target="_blank" rel="noopener">Setup guide</a>
+          <a href="https://github.com/BHUVANSH855/InkGuard/issues" target="_blank" rel="noopener">Report an issue</a>
+        </div>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p>© 2026 InkGuard · MIT License · Built by <a href="https://github.com/BHUVANSH855" target="_blank" rel="noopener">BHUVANSH855</a></p>
+    </div>
+  </footer>
+ 
+  <script src="script.js"></script>
+</body>
+</html>
